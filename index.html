@@ -106,34 +106,124 @@
         .btn-zero {
             grid-column: span 2;
         }
+
+        .calculator-container {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .history-panel {
+            background: #2d2d2d;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 220px;
+            display: none;
+        }
+
+        .history-panel.visible {
+            display: block;
+        }
+
+        .history-header {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #505050;
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .history-item:hover {
+            background: #3a3a3a;
+        }
+
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .history-expression {
+            color: #a0a0a0;
+            font-size: 0.85rem;
+        }
+
+        .history-result {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .history-empty {
+            color: #707070;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .btn-history {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .btn-history:hover {
+            background: #7a8fef;
+        }
     </style>
 </head>
 <body>
-    <div class="calculator">
-        <div class="display">
-            <div class="display-value" id="display">0</div>
+    <div class="calculator-container">
+        <div class="calculator">
+            <div class="display">
+                <div class="display-value" id="display">0</div>
+            </div>
+            <div class="buttons">
+                <button class="btn-clear" onclick="clearDisplay()">C</button>
+                <button class="btn-history" onclick="toggleHistory()">H</button>
+                <button class="btn-operator" onclick="appendOperator('/')">/</button>
+                <button class="btn-operator" onclick="appendOperator('*')">×</button>
+
+                <button class="btn-digit" onclick="appendDigit('7')">7</button>
+                <button class="btn-digit" onclick="appendDigit('8')">8</button>
+                <button class="btn-digit" onclick="appendDigit('9')">9</button>
+                <button class="btn-operator" onclick="appendOperator('-')">−</button>
+
+                <button class="btn-digit" onclick="appendDigit('4')">4</button>
+                <button class="btn-digit" onclick="appendDigit('5')">5</button>
+                <button class="btn-digit" onclick="appendDigit('6')">6</button>
+                <button class="btn-operator" onclick="appendOperator('+')">+</button>
+
+                <button class="btn-digit" onclick="appendDigit('1')">1</button>
+                <button class="btn-digit" onclick="appendDigit('2')">2</button>
+                <button class="btn-digit" onclick="appendDigit('3')">3</button>
+                <button class="btn-equals" onclick="calculate()">=</button>
+
+                <button class="btn-digit btn-zero" onclick="appendDigit('0')">0</button>
+                <button class="btn-digit" onclick="appendDecimal()">.</button>
+            </div>
         </div>
-        <div class="buttons">
-            <button class="btn-clear" onclick="clearDisplay()">C</button>
-            <button class="btn-operator" onclick="appendOperator('/')">/</button>
-            <button class="btn-operator" onclick="appendOperator('*')">×</button>
-            <button class="btn-operator" onclick="appendOperator('-')">−</button>
 
-            <button class="btn-digit" onclick="appendDigit('7')">7</button>
-            <button class="btn-digit" onclick="appendDigit('8')">8</button>
-            <button class="btn-digit" onclick="appendDigit('9')">9</button>
-            <button class="btn-operator" onclick="appendOperator('+')">+</button>
-
-            <button class="btn-digit" onclick="appendDigit('4')">4</button>
-            <button class="btn-digit" onclick="appendDigit('5')">5</button>
-            <button class="btn-digit" onclick="appendDigit('6')">6</button>
-            <button class="btn-equals" onclick="calculate()">=</button>
-
-            <button class="btn-digit" onclick="appendDigit('1')">1</button>
-            <button class="btn-digit" onclick="appendDigit('2')">2</button>
-            <button class="btn-digit" onclick="appendDigit('3')">3</button>
-            <button class="btn-digit btn-zero" onclick="appendDigit('0')">0</button>
-            <button class="btn-digit" onclick="appendDecimal()">.</button>
+        <div class="history-panel" id="historyPanel">
+            <div class="history-header">History</div>
+            <ul class="history-list" id="historyList">
+                <li class="history-empty">No calculations yet</li>
+            </ul>
         </div>
     </div>
 
@@ -142,9 +232,48 @@
         let previousValue = '';
         let operator = null;
         let shouldResetDisplay = false;
+        let history = [];
 
         function updateDisplay() {
             document.getElementById('display').textContent = currentValue;
+        }
+
+        function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            panel.classList.toggle('visible');
+        }
+
+        function addToHistory(expression, result) {
+            history.unshift({ expression, result });
+            if (history.length > 10) {
+                history.pop();
+            }
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (history.length === 0) {
+                list.innerHTML = '<li class="history-empty">No calculations yet</li>';
+                return;
+            }
+            list.innerHTML = history.map((item, index) =>
+                `<li class="history-item" onclick="loadFromHistory(${index})">
+                    <div class="history-expression">${item.expression}</div>
+                    <div class="history-result">= ${item.result}</div>
+                </li>`
+            ).join('');
+        }
+
+        function loadFromHistory(index) {
+            const item = history[index];
+            if (item) {
+                currentValue = item.result;
+                operator = null;
+                previousValue = '';
+                shouldResetDisplay = true;
+                updateDisplay();
+            }
         }
 
         function appendDigit(digit) {
@@ -178,6 +307,16 @@
             shouldResetDisplay = true;
         }
 
+        function getOperatorSymbol(op) {
+            switch (op) {
+                case '+': return '+';
+                case '-': return '−';
+                case '*': return '×';
+                case '/': return '÷';
+                default: return op;
+            }
+        }
+
         function calculate() {
             if (!operator || shouldResetDisplay) return;
 
@@ -202,7 +341,12 @@
                     return;
             }
 
-            currentValue = result === 'Error' ? result : String(result);
+            const expression = `${previousValue} ${getOperatorSymbol(operator)} ${currentValue}`;
+            const resultStr = result === 'Error' ? result : String(result);
+
+            addToHistory(expression, resultStr);
+
+            currentValue = resultStr;
             operator = null;
             previousValue = '';
             shouldResetDisplay = true;
