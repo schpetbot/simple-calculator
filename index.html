@@ -216,6 +216,35 @@
             shouldResetDisplay = false;
             updateDisplay();
         }
+
+        function deleteLastDigit() {
+            if (currentValue.length > 1) {
+                currentValue = currentValue.slice(0, -1);
+            } else {
+                currentValue = '0';
+            }
+            updateDisplay();
+        }
+
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+
+            if (key >= '0' && key <= '9') {
+                appendDigit(key);
+            } else if (key === '.') {
+                appendDecimal();
+            } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+                appendOperator(key);
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                clearDisplay();
+            } else if (key === 'Backspace') {
+                event.preventDefault();
+                deleteLastDigit();
+            }
+        });
     </script>
 </body>
 </html>
